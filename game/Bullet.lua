@@ -1,0 +1,1 @@
+Bullet = Sprite:extend();
