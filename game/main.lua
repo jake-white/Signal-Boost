@@ -7,7 +7,8 @@ require "Bullet";
 --permanent init values
     standard_dt = 1/60; --60 ticks per seconds
     res_x = 256; res_y = 192; --game resolution
-    love.window.setMode(res_x * 4, res_y * 4, {fullscreen = false});
+    --love.window.setMode(res_x * 4, res_y * 4, {fullscreen = false});
+    love.window.setMode(0, 0, {fullscreen = true});
 
 function love.load()
     --game init values
@@ -20,10 +21,13 @@ function love.load()
     gameover = false;
     hit_enemy = false;
     next_player = 1; --the next player that needs to hit the ball
+    music = love.audio.newSource("assets/audio/music.ogg", "stream");
+    music:setLooping(true);
+    music:play();
 
 
     screen_width, screen_height = love.graphics.getDimensions(); --dimensions of screen
-    scale = screen_width/res_x;
+    scale = screen_height/res_y;
     font = love.graphics.newFont("assets/uni0553.ttf", 96);
     love.graphics.setFont(font);
     font:setFilter("nearest", "nearest");
@@ -34,11 +38,14 @@ function love.load()
     ball_image_right = love.graphics.newImage("assets/signal_right.png");
     ball_image_left = love.graphics.newImage("assets/signal_left.png");
     bullet_image = love.graphics.newImage("assets/bullet.png");
+    sky = love.graphics.newImage("assets/sky.png");
+
     p1_image:setFilter("nearest", "nearest");
     p2_image:setFilter("nearest", "nearest");
     ball_image_right:setFilter("nearest", "nearest");
     ball_image_left:setFilter("nearest", "nearest");
     bullet_image:setFilter("nearest", "nearest");
+    sky:setFilter("nearest", "nearest");
 
     p = love.math.random(2);
     if(p == 1) then
@@ -53,6 +60,8 @@ function love.load()
     p1 = Player(20, 100, 2, 20, 0, 0, p1_image, 1);
     p2 = Player(236, 100, 2, 20, 0, 0, p2_image, 2);
     ball = Sprite(res_x/2, 100, 7, 7, ballspeed, -0.2, ball_image);
+    skybox1 = Sprite(0, 0, 256, 384, 0, 0, sky);
+    skybox2 = Sprite(0, -384, 256, 384, 0, 0, sky);
 
     table.insert(sprites, bg);
     table.insert(sprites, p1);
@@ -68,6 +77,9 @@ function love.draw()
     --background    
     love.graphics.setColor(bgcolor);
     love.graphics.rectangle("fill", 0, 0, res_x, res_y);
+    skybox1:draw(camera);
+    skybox2:draw(camera);
+
     indent = false
     love.graphics.setColor(0.5, 0.5, 0.5, 1);
     for i=0, res_y, 4 do
@@ -94,7 +106,7 @@ function love.draw()
         end
     end
         
-    love.graphics.setColor({0, 0, 0});
+    love.graphics.setColor({.5, 1, .5});
     height = string.format("%.0fm", camera + 5);
     font_width = font:getWidth(height) * .15;
     font_height = font:getHeight(height) * .15;
@@ -144,8 +156,9 @@ end
 
 function logic(dt_diff)
     --managing objects  
-    manage_enemies(dt_diff);
+    --manage_enemies(dt_diff);
     manage_entities(dt_diff);
+    manage_skybox(dt_diff);
 
     --changing sky color
     color_change = 1 - (0.0001*dt_diff);
@@ -206,6 +219,17 @@ function manage_enemies(dt_diff)
             end
         end
     end
+end
+
+function manage_skybox(dt_diff)
+    --moving skybox
+    if(skybox1:get_y() - skybox1:get_height() > -camera) then
+        skybox1:move(0, -skybox1:get_height());
+    end
+    if(skybox2:get_y() > -camera) then
+        skybox2:move(0, -skybox2:get_height());
+    end
+    
 end
 
 function love.keypressed(key)

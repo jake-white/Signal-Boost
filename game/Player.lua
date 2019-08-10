@@ -15,9 +15,9 @@ function Player:tick(dt_diff)
             self:move(0, 2 * dt_diff);
         end
     elseif(self.num == 2) then --player 2
-        if love.keyboard.isDown("up") then
+        if love.keyboard.isDown("i") then
             self:move(0, -2 * dt_diff);
-        elseif love.keyboard.isDown("down") then
+        elseif love.keyboard.isDown("k") then
             self:move(0, 2 * dt_diff);
         end
     end
