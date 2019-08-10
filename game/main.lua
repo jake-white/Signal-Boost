@@ -29,6 +29,7 @@ function love.load(arg)
     hit_enemy = false;
     next_player = 1; --the next player that needs to hit the ball
     music = love.audio.newSource("assets/audio/music.ogg", "stream");
+    gameover_music = love.audio.newSource("assets/audio/gameover.ogg", "stream");
     bounce = love.audio.newSource("assets/audio/bounce.wav", "static");
     shoot = love.audio.newSource("assets/audio/shoot.wav", "static");
     hurt = love.audio.newSource("assets/audio/hurt.wav", "static");
@@ -143,7 +144,7 @@ function love.draw()
         font_width = font:getWidth(text) * .15;
         font_height = font:getHeight(text) * .15;
         love.graphics.print(text, res_x/2- font_width/2, res_y - 30 - font_height*2, 0, .15, .15);
-        text = "Press Red to restart.";
+        text = "Press White to restart.";
         font_width = font:getWidth(text) * .15;
         font_height = font:getHeight(text) * .15;
         love.graphics.print(text, res_x/2- font_width/2, res_y - 30 - font_height, 0, .15, .15);
@@ -183,8 +184,8 @@ function logic(dt_diff)
     manage_skybox(dt_diff);
 
     --speeding up ball
-    ball:set_dx(ball:get_dx()*1.001);
-    ball:set_dy(ball:get_dy()*1.001);
+    ball:set_dx(ball:get_dx()*1.0005);
+    ball:set_dy(ball:get_dy()*1.0005);
     if(p1:check_collision(ball)) then
         ball:set_dx(-ball:get_dx());
         ball:set_position(p1:get_x() + p1:get_width() + 1, ball:get_y());
@@ -287,8 +288,11 @@ function manage_skybox(dt_diff)
 end
 
 function love.keypressed(key)
-    if(is_gameovered and (key == 'f' or (key == 'h' and two_player))) then
-        love.load();
+    if(is_gameovered) then
+        if(key == 'e' or (key == 'u' and two_player)) then
+            gameover_music:stop();
+            love.load();
+        end
     elseif(key == 'f') then
         p1:shoot();
     elseif(key == 'h' and two_player) then
@@ -303,4 +307,5 @@ function gameover()
     ball:die();
     is_gameovered = true;
     music:stop();
+    gameover_music:play();
 end
