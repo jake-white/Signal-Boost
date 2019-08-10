@@ -10,6 +10,7 @@ require "Bullet";
     res_x = 256; res_y = 204; --game resolution
     --love.window.setMode(res_x * 4, res_y * 4, {fullscreen = false});
     love.window.setMode(0, 0, {fullscreen = true});
+    love.window.setTitle("Signal Boost");
     two_player = false;
 
 function love.load(arg)
@@ -33,6 +34,7 @@ function love.load(arg)
     bounce = love.audio.newSource("assets/audio/bounce.wav", "static");
     shoot = love.audio.newSource("assets/audio/shoot.wav", "static");
     hurt = love.audio.newSource("assets/audio/hurt.wav", "static");
+    explode = love.audio.newSource("assets/audio/explosion.wav", "static");
     music:setLooping(true);
     music:play();
 
@@ -50,6 +52,15 @@ function love.load(arg)
     ball_image_left = love.graphics.newImage("assets/signal_left.png");
     bullet_image = love.graphics.newImage("assets/bullet.png");
     sky = love.graphics.newImage("assets/sky.png");
+    
+    e1 = love.graphics.newImage("assets/explosion_1.png");    
+    e2 = love.graphics.newImage("assets/explosion_2.png");    
+    e3 = love.graphics.newImage("assets/explosion_3.png"); 
+    e4 = love.graphics.newImage("assets/explosion_4.png");
+    e1:setFilter("nearest", "nearest");
+    e2:setFilter("nearest", "nearest");
+    e3:setFilter("nearest", "nearest");
+    e4:setFilter("nearest", "nearest");
 
     p1_image:setFilter("nearest", "nearest");
     p2_image:setFilter("nearest", "nearest");
@@ -271,6 +282,9 @@ function manage_enemies(dt_diff)
         for k,w in ipairs(bullets) do
             if(v:check_collision(w)) then
                 table.remove(enemies, i);
+                explosion = Animated_Sprite(v:get_x(), v:get_y(), 10, 10, 0, 0, {e1, e2, e3, e4});
+                explode:play();
+                table.insert(sprites, explosion);
             end
         end
     end
