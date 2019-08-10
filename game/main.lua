@@ -6,7 +6,7 @@ require "Enemy";
 require "Bullet";
 --permanent init values
     standard_dt = 1/60; --60 ticks per seconds
-    res_x = 256; res_y = 192; --game resolution
+    res_x = 256; res_y = 204; --game resolution
     --love.window.setMode(res_x * 4, res_y * 4, {fullscreen = false});
     love.window.setMode(0, 0, {fullscreen = true});
 
@@ -22,6 +22,7 @@ function love.load()
     hit_enemy = false;
     next_player = 1; --the next player that needs to hit the ball
     music = love.audio.newSource("assets/audio/music.ogg", "stream");
+    bounce = love.audio.newSource("assets/audio/bounce.wav", "static");
     music:setLooping(true);
     music:play();
 
@@ -118,7 +119,7 @@ function love.draw()
         font_height = font:getHeight(text) * .15;
         love.graphics.print(text, res_x/2- font_width/2, res_y - 30 - font_height*3, 0, .15, .15);
         if(hit_enemy) then
-            text = string.format("An enemy intercepted the message!");
+            text = string.format("Signal intercepted!");
         else
             text = string.format("Player %s dropped the signal!", next_player);
         end
@@ -156,7 +157,7 @@ end
 
 function logic(dt_diff)
     --managing objects  
-    --manage_enemies(dt_diff);
+    manage_enemies(dt_diff);
     manage_entities(dt_diff);
     manage_skybox(dt_diff);
 
@@ -172,11 +173,13 @@ function logic(dt_diff)
         ball:set_position(p1:get_x() + p1:get_width() + 1, ball:get_y());
         ball:set_image(ball_image_right);
         next_player = 2;
+        bounce:play();
     elseif(p2:check_collision(ball)) then
         ball:set_dx(-ball:get_dx());
         ball:set_position(p2:get_x() - ball:get_width() - 1, ball:get_y());
         ball:set_image(ball_image_left);
         next_player = 1;
+        bounce:play();
     end
 end
 
@@ -186,7 +189,6 @@ function manage_entities(dt_diff)
         if(v:get_x() > res_x or v:get_x() + v:get_width() < 0) then
             v:die();
             table.remove(bullets, i);
-            print("Bullet died.");
         end
     end
     if(ball:get_x() > res_x or ball:get_x() + ball:get_width() < 0) then
@@ -212,6 +214,7 @@ function manage_enemies(dt_diff)
         if(ball:check_collision(v)) then
             ball:die();
             gameover = true;
+            hit_enemy = true;
         end
         for k,w in ipairs(bullets) do
             if(v:check_collision(w)) then
