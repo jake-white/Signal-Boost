@@ -28,10 +28,10 @@ function Player:shoot()
     shoot:play();
     speed = 0; rotation = 0;
     if(self.num == 1) then
-        speed = 3
+        speed = 4
         rotation = 0
     elseif(self.num == 2) then
-        speed = -3
+        speed = -4
         rotation = math.pi
     end
     bullet = Bullet(self:get_x() + self:get_width(), self:get_y() + self:get_height()/2, 8, 3, speed, 0, bullet_image, rotation);

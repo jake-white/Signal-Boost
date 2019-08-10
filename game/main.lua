@@ -23,6 +23,7 @@ function love.load(arg)
     bullets = {};
     enemies = {};
     camera = 0;
+    lives = 3;
     enemy_percent = 0.01;
     is_gameovered = false;
     hit_enemy = false;
@@ -30,6 +31,7 @@ function love.load(arg)
     music = love.audio.newSource("assets/audio/music.ogg", "stream");
     bounce = love.audio.newSource("assets/audio/bounce.wav", "static");
     shoot = love.audio.newSource("assets/audio/shoot.wav", "static");
+    hurt = love.audio.newSource("assets/audio/hurt.wav", "static");
     music:setLooping(true);
     music:play();
 
@@ -55,23 +57,19 @@ function love.load(arg)
     bullet_image:setFilter("nearest", "nearest");
     sky:setFilter("nearest", "nearest");
 
-    p = love.math.random(2);
-    if(p == 1) then
-        ballspeed = .7;
-        next_player = 2;
-        ball_image = ball_image_right;
-    else
-        ballspeed = -.7;
-        next_player = 1;
-        ball_image = ball_image_left;
-    end
     p1 = Player(20, 100, 2, 20, 0, 0, p1_image, 1);
     if(two_player) then
         p2 = Player(236, 100, 2, 20, 0, 0, p2_image, 2);
     else
         p2 = Rect(236, 100, 2, res_y, 0, 0, {.1, .1, .6});
     end
-    ball = Sprite(res_x/2, 100, 7, 7, ballspeed, -0.2, ball_image);
+    set_ball();
+    ball_lives = {};
+    table.insert(ball_lives, Sprite(res_x/2 - 7/2 - 25, res_y - 10, 7, 7, 0, 0, ball_image))
+    table.insert(ball_lives, Sprite(res_x/2 - 7/2,  res_y - 10, 7, 7, 0, 0, ball_image))
+    table.insert(ball_lives, Sprite(res_x/2 - 7/2 + 25,  res_y - 10, 7, 7, 0, 0, ball_image))
+
+
     skybox1 = Sprite(0, 0, 256, 384, 0, 0, sky);
     skybox2 = Sprite(0, -384, 256, 384, 0, 0, sky);
 
@@ -126,6 +124,12 @@ function love.draw()
     font_height = font:getHeight(height) * .15;
     love.graphics.print(height, res_x/2- font_width/2, res_y - 30, 0, .15, .15);
 
+    for i,v in ipairs(ball_lives) do
+        if(i <= lives) then
+            v:draw(0);
+        end
+    end
+
     if(is_gameovered) then
         text = "Game Over";
         font_width = font:getWidth(text) * .15;
@@ -169,6 +173,10 @@ function love.update(dt)
 end
 
 function logic(dt_diff)
+    --lives
+    if(lives <= 0) then
+        gameover()
+    end
     --managing objects  
     manage_enemies(dt_diff);
     manage_entities(dt_diff);
@@ -192,6 +200,38 @@ function logic(dt_diff)
     end
 end
 
+function reset_ball()    
+    p = love.math.random(2);
+    if(p == 1) then
+        ballspeed = .7;
+        next_player = 2;
+        ball_image = ball_image_right;
+    else
+        ballspeed = -.7;
+        next_player = 1;
+        ball_image = ball_image_left;
+    end
+    ball:set_position(res_x/2, ball:get_y());
+    ball:set_dx(ballspeed);
+    ball:set_dy(-0.2);
+    ball:set_image(ball_image);
+end
+
+function set_ball()
+    p = love.math.random(2);
+    if(p == 1) then
+        ballspeed = .7;
+        next_player = 2;
+        ball_image = ball_image_right;
+    else
+        ballspeed = -.7;
+        next_player = 1;
+        ball_image = ball_image_left;
+    end
+    ball = Sprite(res_x/2, 100, 7, 7, ballspeed, -0.2, ball_image);
+end
+
+
 function manage_entities(dt_diff)
     --managing bullets
     for i,v in ipairs(bullets) do
@@ -201,8 +241,9 @@ function manage_entities(dt_diff)
         end
     end
     if(ball:get_x() > res_x or ball:get_x() + ball:get_width() < 0) then
-        ball:die();
-        gameover();
+        lives = lives - 1
+        hurt:play();
+        reset_ball();
     end
 end
 
@@ -213,7 +254,7 @@ function manage_enemies(dt_diff)
     rand = love.math.random();
     if(rand < enemy_percent) then
         position = res_x/2 - 50 + love.math.random(100);
-        type = math.floor(love.math.random(2));
+        type = math.floor(love.math.random(4));
         new_enemy = Enemy(position, -camera, 10, 10, 0, 0, type);
         table.insert(enemies, new_enemy);
     end
@@ -221,8 +262,9 @@ function manage_enemies(dt_diff)
     --enemy collisions
     for i,v in ipairs(enemies) do
         if(ball:check_collision(v)) then
-            ball:die();
-            gameover();
+            lives = lives - 1;
+            hurt:play();
+            table.remove(enemies, i);
             hit_enemy = true;
         end
         for k,w in ipairs(bullets) do
@@ -258,6 +300,7 @@ function love.keypressed(key)
 end
 
 function gameover()
+    ball:die();
     is_gameovered = true;
     music:stop();
 end
