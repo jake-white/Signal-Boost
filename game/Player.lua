@@ -24,6 +24,8 @@ function Player:tick(dt_diff)
 end
 
 function Player:shoot()
+    shoot:stop();
+    shoot:play();
     speed = 0; rotation = 0;
     if(self.num == 1) then
         speed = 3

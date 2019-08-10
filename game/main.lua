@@ -1,6 +1,7 @@
 Object = require "classic";
 require "Rect";
 require "Sprite";
+require "Animated_Sprite";
 require "Player";
 require "Enemy";
 require "Bullet";
@@ -9,20 +10,26 @@ require "Bullet";
     res_x = 256; res_y = 204; --game resolution
     --love.window.setMode(res_x * 4, res_y * 4, {fullscreen = false});
     love.window.setMode(0, 0, {fullscreen = true});
+    two_player = false;
 
-function love.load()
+function love.load(arg)
+    if(arg ~= nil) then
+        if(arg[1] == "2") then
+            two_player = true;
+        end
+    end
     --game init values
     sprites = {};
     bullets = {};
     enemies = {};
     camera = 0;
-    bgcolor = {.75, .92, .93, 1};
     enemy_percent = 0.01;
-    gameover = false;
+    is_gameovered = false;
     hit_enemy = false;
     next_player = 1; --the next player that needs to hit the ball
     music = love.audio.newSource("assets/audio/music.ogg", "stream");
     bounce = love.audio.newSource("assets/audio/bounce.wav", "static");
+    shoot = love.audio.newSource("assets/audio/shoot.wav", "static");
     music:setLooping(true);
     music:play();
 
@@ -59,7 +66,11 @@ function love.load()
         ball_image = ball_image_left;
     end
     p1 = Player(20, 100, 2, 20, 0, 0, p1_image, 1);
-    p2 = Player(236, 100, 2, 20, 0, 0, p2_image, 2);
+    if(two_player) then
+        p2 = Player(236, 100, 2, 20, 0, 0, p2_image, 2);
+    else
+        p2 = Rect(236, 100, 2, res_y, 0, 0, {.1, .1, .6});
+    end
     ball = Sprite(res_x/2, 100, 7, 7, ballspeed, -0.2, ball_image);
     skybox1 = Sprite(0, 0, 256, 384, 0, 0, sky);
     skybox2 = Sprite(0, -384, 256, 384, 0, 0, sky);
@@ -76,8 +87,6 @@ function love.draw()
 
     
     --background    
-    love.graphics.setColor(bgcolor);
-    love.graphics.rectangle("fill", 0, 0, res_x, res_y);
     skybox1:draw(camera);
     skybox2:draw(camera);
 
@@ -106,6 +115,10 @@ function love.draw()
             v:draw(camera);
         end
     end
+
+    if(not two_player) then
+        p2:set_position(p2:get_x(), -camera);
+    end
         
     love.graphics.setColor({.5, 1, .5});
     height = string.format("%.0fm", camera + 5);
@@ -113,7 +126,7 @@ function love.draw()
     font_height = font:getHeight(height) * .15;
     love.graphics.print(height, res_x/2- font_width/2, res_y - 30, 0, .15, .15);
 
-    if(gameover) then
+    if(is_gameovered) then
         text = "Game Over";
         font_width = font:getWidth(text) * .15;
         font_height = font:getHeight(text) * .15;
@@ -136,7 +149,7 @@ end
 function love.update(dt)
     dt_diff = dt/standard_dt;
 
-    if(not gameover) then
+    if(not is_gameovered) then
         for i,v in ipairs(sprites) do
             v:tick(dt_diff);
         end
@@ -160,10 +173,6 @@ function logic(dt_diff)
     manage_enemies(dt_diff);
     manage_entities(dt_diff);
     manage_skybox(dt_diff);
-
-    --changing sky color
-    color_change = 1 - (0.0001*dt_diff);
-    bgcolor = {bgcolor[1]*color_change, bgcolor[2]*color_change, bgcolor[3]*color_change};
 
     --speeding up ball
     ball:set_dx(ball:get_dx()*1.001);
@@ -193,7 +202,7 @@ function manage_entities(dt_diff)
     end
     if(ball:get_x() > res_x or ball:get_x() + ball:get_width() < 0) then
         ball:die();
-        gameover = true;
+        gameover();
     end
 end
 
@@ -213,7 +222,7 @@ function manage_enemies(dt_diff)
     for i,v in ipairs(enemies) do
         if(ball:check_collision(v)) then
             ball:die();
-            gameover = true;
+            gameover();
             hit_enemy = true;
         end
         for k,w in ipairs(bullets) do
@@ -236,11 +245,19 @@ function manage_skybox(dt_diff)
 end
 
 function love.keypressed(key)
-    if(gameover and (key == 'f' or key == 'h')) then
+    if(is_gameovered and (key == 'f' or (key == 'h' and two_player))) then
         love.load();
     elseif(key == 'f') then
         p1:shoot();
-    elseif(key == 'h') then
+    elseif(key == 'h' and two_player) then
         p2:shoot();
     end
+    if(key == '/') then
+        love.event.quit() 
+    end
+end
+
+function gameover()
+    is_gameovered = true;
+    music:stop();
 end

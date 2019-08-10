@@ -12,23 +12,37 @@ end
 
 function Enemy:new(x, y, width, height, dx, dy, type)
     Enemy.super.new(self, x, y, width, height, dx, dy, enemy_images[type])
-    if(self:get_x() + self:get_width()/2 > res_x/2) then
-        self.dx = -1;
-        self:set_rotation(3*math.pi/2)
-    else
-        self.dx = 1;
-        self:set_rotation(math.pi/2);
+    self.type = type
+    if(self.type == 1) then
+        if(self:get_x() + self:get_width()/2 > res_x/2) then
+            self.dx = -1;
+            self:set_rotation(3*math.pi/2)
+        else
+            self.dx = 1;
+            self:set_rotation(math.pi/2);
+        end
+    elseif(self.type == 2) then
+        if(self:get_x() + self:get_width()/2 > res_x/2) then
+            self.dx = -0.5;
+            self.dy = 0.5;
+            self:set_rotation(5*math.pi/4)
+        else
+            self.dx = 0.5;
+            self.dy = 0.5;
+            self:set_rotation(-math.pi/4);
+        end
     end
 end
 
 function Enemy:tick(diff_dt)
-    if(self:get_x() + self:get_width()/2 < res_x/4) then
-        self.dx = 1;
-        self:set_rotation(math.pi/2);
-    elseif(self:get_x() + self:get_width()/2 > 3*res_x/4) then
-        self.dx = -1;
-        self:set_rotation(3*math.pi/2);
+    if(self.type == 1 or self.type == 2) then
+        if(self:get_x() + self:get_width()/2 < res_x/4) then
+            self.dx = math.abs(self.dx);
+            self:set_rotation(math.pi/2);
+        elseif(self:get_x() + self:get_width()/2 > 3*res_x/4) then
+            self.dx = -math.abs(self.dx);
+            self:set_rotation(3*math.pi/2);
+        end
     end
-    
     Enemy.super.tick(self, diff_dt)
 end
